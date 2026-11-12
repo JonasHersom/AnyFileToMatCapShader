@@ -1,0 +1,50 @@
+:root {
+  --accent: #2f5fb3;
+  --border: #d5d9e0;
+  --bg: #f2f4f7;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: #1d2330;
+  line-height: 1.45;
+}
+
+main { max-width: 1200px; margin: 0 auto; padding: 16px 20px 48px; }
+h1 small, h2 small { font-weight: normal; font-size: 0.6em; color: #5b6475; margin-left: 12px; }
+a { color: var(--accent); }
+
+/* header */
+.site-header { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid var(--border); }
+.site-header .bar, .site-header .part-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 20px; }
+.site-header .part-tabs { border-top: 1px solid var(--border); background: #f8f9fb; padding-top: 6px; padding-bottom: 6px; }
+.brand { font-weight: 700; text-decoration: none; color: #1d2330; margin-right: 12px; }
+.label { color: #5b6475; font-size: 0.9em; }
+.part-tabs .label { margin-right: 8px; font-weight: 600; color: #1d2330; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.tabs a { padding: 3px 10px; border-radius: 6px; text-decoration: none; color: #1d2330; border: 1px solid transparent; }
+.tabs a:hover { background: #e9edf5; }
+.tabs a[aria-current="page"] { background: var(--accent); color: #fff; }
+
+/* parts */
+.part { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px 12px; margin: 20px 0; scroll-margin-top: 90px; }
+.part h2 { margin: 0 0 4px; }
+.summary { margin: 0 0 12px; color: #3d4556; }
+.part-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+canvas { border: 1px solid #000; background: #000; max-width: 100%; }
+.controls { display: flex; flex-direction: column; gap: 10px; min-width: 220px; max-width: 300px; }
+.controls label { display: flex; flex-direction: column; gap: 2px; font-size: 0.92em; }
+.controls output { color: #5b6475; font-size: 0.85em; }
+.controls .status { font-weight: 600; }
+.links { margin: 12px 0 0; font-size: 0.9em; display: flex; gap: 14px; flex-wrap: wrap; }
+.error { color: #b00020; font-weight: 600; }
+
+/* front page */
+.index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; }
+.card h2 { margin: 0 0 6px; font-size: 1.1em; }
+.card ol { margin: 0; padding-left: 22px; }

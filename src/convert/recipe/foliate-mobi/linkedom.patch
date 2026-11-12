@@ -1,0 +1,134 @@
+--- a/mobi.js
++++ b/mobi.js
+@@ -1,8 +1,10 @@
++// @ts-nocheck
++import { DOMParser } from 'linkedom/worker'
+ const unescapeHTML = str => {
+     if (!str) return ''
+-    const textarea = document.createElement('textarea')
+-    textarea.innerHTML = str
+-    return textarea.value
++    return new DOMParser().parseFromString(
++        `<div>${str.replaceAll('<', '&lt;')}</div>`, 'text/html'
++    ).documentElement.textContent
+ }
+ 
+ const MIME = {
+@@ -669,7 +671,6 @@
+ 
+ class MOBI6 {
+     parser = new DOMParser()
+-    serializer = new XMLSerializer()
+     #resourceCache = new Map()
+     #textCache = new Map()
+     #cache = new Map()
+@@ -842,7 +843,7 @@
+     }
+     async createDocument(section) {
+         const str = await this.loadText(section)
+-        return this.parser.parseFromString(str, this.#type)
++        return this.parser.parseFromString(str, "text/html")
+     }
+     async loadSection(section) {
+         if (this.#cache.has(section)) return this.#cache.get(section)
+@@ -862,7 +863,7 @@
+         }`))
+ 
+         await this.replaceResources(doc)
+-        const result = this.serializer.serializeToString(doc)
++        const result = doc.toString()
+         const url = URL.createObjectURL(new Blob([result], { type: this.#type }))
+         this.#cache.set(section, url)
+         return url
+@@ -914,9 +915,14 @@
+     const match = str.match(/\s(id|name|aid)\s*=\s*['"]([^'"]*)['"]/i)
+     if (!match) return
+     const [, attr, value] = match
+-    return `[${attr}="${CSS.escape(value)}"]`
++    return { attr: attr.toLowerCase(), value }
+ }
+ 
++const findFragment = (doc, fragment) => fragment
++    ? Array.from(doc.querySelectorAll(`[${fragment.attr}]`))
++        .find(el => el.getAttribute(fragment.attr) === fragment.value) ?? null
++    : null
++
+ // replace asynchronously and sequentially
+ const replaceSeries = async (str, regex, f) => {
+     const matches = []
+@@ -938,7 +944,6 @@
+ 
+ class KF8 {
+     parser = new DOMParser()
+-    serializer = new XMLSerializer()
+     transformTarget = new EventTarget()
+     #cache = new Map()
+     #fragmentOffsets = new Map()
+@@ -1016,14 +1021,14 @@
+             }
+         }
+ 
+-        this.sections = this.#sections.map((section, index) =>
+-            section.frags.length ? ({
+-                id: index,
+-                load: () => this.loadSection(section),
+-                createDocument: () => this.createDocument(section),
+-                size: section.length,
+-                pageSpread: pageSpreads.get(index),
+-            }) : ({ linear: 'no' }))
++        this.sections = this.#sections.map((section, index) => ({
++            id: index,
++            load: () => this.loadSection(section),
++            createDocument: () => this.createDocument(section),
++            size: section.length,
++            pageSpread: pageSpreads.get(index),
++            linear: section.frags.length ? 'yes' : 'no'
++        }))
+ 
+         try {
+             const ncx = await this.mobi.getNCX()
+@@ -1165,7 +1170,7 @@
+     }
+     async createDocument(section) {
+         const str = await this.loadText(section)
+-        return this.parser.parseFromString(str, this.#type)
++        return this.parser.parseFromString(str, "text/html")
+     }
+     async loadSection(section) {
+         if (this.#cache.has(section)) return this.#cache.get(section)
+@@ -1183,7 +1188,7 @@
+                 el.replaceWith(node)
+         }
+         const url = URL.createObjectURL(
+-            new Blob([this.serializer.serializeToString(doc)], { type: this.#type }))
++            new Blob([doc.toString()], { type: this.#type }))
+         this.#cache.set(section, url)
+         return url
+     }
+@@ -1206,7 +1211,7 @@
+         if (index < 0) return
+ 
+         const saved = this.#fragmentSelectors.get(fid)?.get(off)
+-        if (saved) return { index, anchor: doc => doc.querySelector(saved) }
++        if (saved) return { index, anchor: doc => findFragment(doc, saved) }
+ 
+         const { skel, frags } = this.#sections[index]
+         const frag = frags.find(frag => frag.index === fid)
+@@ -1215,7 +1220,7 @@
+         const str = this.mobi.decode(fragRaw.slice(off))
+         const selector = getFragmentSelector(str)
+         this.#setFragmentSelector(fid, off, selector)
+-        const anchor = doc => doc.querySelector(selector)
++        const anchor = doc => findFragment(doc, selector)
+         return { index, anchor }
+     }
+     splitTOCHref(href) {
+@@ -1225,7 +1230,7 @@
+     }
+     getTOCFragment(doc, { fid, off }) {
+         const selector = this.#fragmentSelectors.get(fid)?.get(off)
+-        return doc.querySelector(selector)
++        return findFragment(doc, selector)
+     }
+     isExternal(uri) {
+         return /^(?!blob|kindle)\w+:/i.test(uri)

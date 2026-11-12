@@ -1,0 +1,46 @@
+name: File format request
+description: For requesting new file formats or conversion routes.
+title: "[File format] "
+labels: ["format request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **PLEASE NOTE:** Simply listing a file format with no further justification beyond "I want this" will likely get your issue closed. There are a lot of file formats out there, and it can take hours to add support for just one. Just naming them isn't productive, so please try to be forthcoming with resources of your own.
+
+        Please remember - a developer will have to do 100x more work to actually implement the format. Doing a bit of research is the minimum you could do compared to the task of actually implementing it.
+  - type: textarea
+    id: format
+    attributes:
+      label: Describe the file format
+      description: A clear and concise description of what this file format is, what media it contains, and where it's used.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Describe the expected behavior
+      description: A clear and concise description of what you expect the conversion to look like. What medium is it converting to/from, and how should that media be represented?
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Provide reference implementations
+      description: To make it worthwhile for our contributors, provide links to existing browser-based solutions/libraries if possible, or at the very least a reference for implementing the format. Also make sure that your references have an open-source license compatible with GPL-2.0. If you have nothing, don't make a request.
+    validations:
+      required: true
+  - type: dropdown
+    id: implementing
+    attributes:
+      label: Do you plan on implementing this yourself?
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the request here.

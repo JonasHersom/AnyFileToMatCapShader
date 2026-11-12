@@ -1,0 +1,51 @@
+diff --git a/src/packager/web/export.js b/src/packager/web/export.js
+index cd9b174..1925e5b 100644
+--- a/src/packager/web/export.js
++++ b/src/packager/web/export.js
+@@ -1,7 +1,17 @@
+ import {setAdapter} from '../adapter';
+ import Packager from '../packager';
++import loadProject from '../load-project';
++import {downloadProject} from '../download-project';
++import largeAssets from '../large-assets';
+ import WebAdapter from './adapter';
+ 
+ setAdapter(new WebAdapter());
+ 
++export {
++  Packager,
++  loadProject,
++  downloadProject,
++  largeAssets
++};
++
+ export default Packager;
+diff --git a/webpack.config.js b/webpack.config.js
+index 73a57a9..7621b9d 100644
+--- a/webpack.config.js
++++ b/webpack.config.js
+@@ -206,7 +206,7 @@ const makeWebsite = () => ({
+ const makeNode = () => ({
+   ...base,
+   devtool: '',
+-  target: 'node',
++  target: 'webworker',
+   output: {
+     filename: '[name].js',
+     path: dist,
+@@ -217,14 +217,7 @@ const makeNode = () => ({
+     __dirname: false,
+   },
+   entry: {
+-    packager: './src/packager/node/export.js'
+-  },
+-  externals: {
+-    '@turbowarp/jszip': '@turbowarp/jszip',
+-    '@turbowarp/sbdl': '@turbowarp/sbdl',
+-    '@fiahfy/icns': '@fiahfy/icns',
+-    'cross-fetch': 'cross-fetch',
+-    'sha.js': 'sha.js',
++    packager: './src/packager/web/export.js'
+   },
+   module: {
+     rules: [

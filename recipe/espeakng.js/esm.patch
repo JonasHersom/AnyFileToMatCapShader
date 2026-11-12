@@ -1,0 +1,20 @@
+diff --git a/js/espeakng-simple.js b/js/espeakng-simple.js
+index b6cb18a..6ecc0ba 100644
+--- a/js/espeakng-simple.js
++++ b/js/espeakng-simple.js
+@@ -2,6 +2,7 @@
+  * espeakng-simple.js - Simple wrapper for eSpeak-ng
+  */
+ 
++const fakeWindow = {};
+ (function(window) {
+   'use strict';
+ 
+@@ -295,4 +296,5 @@
+ 
+   window.SimpleTTS = SimpleTTS;
+ 
+-})(window);
+\ No newline at end of file
++})(fakeWindow);
++export const SimpleTTS = fakeWindow.SimpleTTS;

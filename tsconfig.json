@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "node", "@types/pdfkit"],
+    "skipLibCheck": true,
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "allowJs": true,
+    /* Linting */
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    /* Temporary fix!!! This is only really a problem in dependencies. */
+    /* Not sure how to best handle this in the long term, though. */
+    "noUnusedLocals": false /* SHOULD be true */,
+    "noUnusedParameters": false /* SHOULD be true */,
+    /**
+     * The TS transpilation of the qoi-fu dependency isn't compabile with
+     * our settings. They do provide a JS file, but tsc _really_ wants to
+     * import the TS file instead. We define a custom path to steer it
+     * away from the TS file.
+     */
+    "paths": {
+      "turbowarp-packager": ["./built/turbowarp-packager/packager"],
+      "turbowarp-unpackager": ["./built/turbowarp-unpackager/unpackager"],
+      "qoi-fu": ["./built/qoi-fu/transpiled/QOI.js"],
+      "qoa-fu": ["./built/qoa-fu/transpiled/QOA.js"],
+      "built/clang/llvm.js": ["./built/clang/llvm.d.ts", "./src/handlers/clang/llvm.d.ts"],
+      // this is driving me nuts
+      "*": ["./*"]
+    },
+    /**
+     * JSX setup
+     */
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  },
+  "include": ["src", "scripts", "recipe"]
+}

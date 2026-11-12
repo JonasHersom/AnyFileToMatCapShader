@@ -1,0 +1,51 @@
+diff --git a/src/TileData.ts b/src/TileData.ts
+index d3f0aac..00695b8 100644
+--- a/src/TileData.ts
++++ b/src/TileData.ts
+@@ -1,4 +1,4 @@
+-import { Liquid, Slope, Tile, TileFlag } from './types'
++import { Liquid, Slope, type Tile, TileFlag } from './types'
+ 
+ export class TileData {
+   readonly width: number
+diff --git a/src/section/TileEntities.ts b/src/section/TileEntities.ts
+index 32a8c75..e7363be 100644
+--- a/src/section/TileEntities.ts
++++ b/src/section/TileEntities.ts
+@@ -1,21 +1,21 @@
+ import type BinaryReader from '../BinaryReader'
+ import {
+-  CritterAnchor,
+-  DeadCellsDisplayJar,
+-  DisplayDoll,
+-  FoodPlatter,
+-  HatRack,
+-  Item,
+-  ItemFrame,
+-  ItemSlot,
+-  KiteAnchor,
+-  LogicSensor,
+-  Pylon,
+-  TileEntity,
+-  TileEntityBase,
++  type CritterAnchor,
++  type DeadCellsDisplayJar,
++  type DisplayDoll,
++  type FoodPlatter,
++  type HatRack,
++  type Item,
++  type ItemFrame,
++  type ItemSlot,
++  type KiteAnchor,
++  type LogicSensor,
++  type Pylon,
++  type TileEntity,
++  type TileEntityBase,
+   TileEntityType,
+-  TrainingDummy,
+-  WeaponsRack,
++  type TrainingDummy,
++  type WeaponsRack,
+ } from '../types'
+ import type { Section } from '../sections'
+ import type { WorldProperties } from '../FileReader'

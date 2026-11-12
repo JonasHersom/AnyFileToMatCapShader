@@ -1,0 +1,67 @@
+name: Build Electron Releases
+
+on:
+  push:
+    branches: ["master"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-electron:
+    runs-on: ${{ matrix.os }}
+
+    env:
+      VITE_COMMIT_SHA: ${{ github.sha }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+          - os: windows-2025
+            platform: win
+          - os: macos-15
+            platform: mac
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Install dependencies
+        run: bun i --frozen-lockfile
+
+      - name: Check prebuilts
+        run: bun run build:check
+
+      - name: Set version
+        run: bun pm pkg set version=0.0.${{ github.run_number }}
+
+      - name: Build Distribution for ${{ matrix.platform }}
+        run: bun run desktop:dist:${{ matrix.platform }}
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: latest
+          name: Rolling Release
+          prerelease: false
+          make_latest: true
+          files: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+            release/*.zip
+            release/*.snap
+            release/*.deb
+            release/*.blockmap
+            release/latest*.yml
+          body: "This release contains offline Electron builds of convert.to.it, built from the latest commit on the `master` branch."

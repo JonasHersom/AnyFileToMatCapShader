@@ -1,0 +1,45 @@
+import puppeteer from "puppeteer";
+import { preview } from "vite";
+
+const minify = process.argv[3] === "--minify";
+
+const outputPath = process.argv[2] || "cache.json";
+// delete previous cache.json so regeneration is forced to happen
+const outputFile = Bun.file(outputPath);
+if (await outputFile.exists()) {
+  await outputFile.delete();
+}
+
+const server = await preview({ logLevel: "silent", preview: { port: 0 } });
+
+const browser = await puppeteer.launch({
+  headless: "new",
+  args: ["--no-sandbox", "--disable-setuid-sandbox"],
+});
+
+const page = await browser.newPage();
+
+await Promise.all([
+  new Promise((resolve) => {
+    page.on("console", (msg) => {
+      const text = msg.text();
+      if (msg.type() === "error") console.error(text);
+      if (text === "Built initial format list.") resolve();
+    });
+  }),
+  page.goto(server.resolvedUrls.local[0]),
+]);
+
+const cacheJSON = await page.evaluate((minify) => {
+  if (minify === true) {
+    return JSON.stringify(JSON.parse(window.printSupportedFormatCache()));
+  }
+  return window.printSupportedFormatCache();
+}, minify);
+
+await Bun.write(outputPath, cacheJSON);
+
+await browser.close();
+await server.close();
+
+console.log("All done.");

@@ -1,0 +1,34 @@
+diff --git a/scripts/Decrypter.js b/scripts/Decrypter.js
+index 992d573..3c08b90 100644
+--- a/scripts/Decrypter.js
++++ b/scripts/Decrypter.js
+@@ -11,7 +11,7 @@
+  * @param {string|null} encryptionKey - Encryption-Key
+  * @constructor - Decrypter
+  */
+-function Decrypter(encryptionKey) {
++export function Decrypter(encryptionKey) {
+ 	// Encryption-Fields
+ 	this.encryptCode = encryptionKey;
+ 
+diff --git a/scripts/RPGFile.js b/scripts/RPGFile.js
+index 25add90..5e2e9bc 100644
+--- a/scripts/RPGFile.js
++++ b/scripts/RPGFile.js
+@@ -12,7 +12,7 @@
+  * @param {undefined|string|null} blobUrl - Blob-URL if set else null
+  * @constructor - RPGFile
+  */
+-function RPGFile(file, blobUrl) {
++export function RPGFile(file, blobUrl) {
+ 	if(typeof blobUrl === 'undefined')
+ 		blobUrl = null;
+ 
+@@ -189,7 +189,6 @@ RPGFile.prototype.convertExtension = function(toNormal) {
+  */
+ RPGFile.prototype.createBlobUrl = function(toNormal) {
+ 	this.blob = new Blob([this.content], {type: this.getMimeType(toNormal)});
+-	this.blob.type = this.getMimeType();
+ 	this.fileUrl = window.URL.createObjectURL(this.blob);
+ };
+ 

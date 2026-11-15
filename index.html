@@ -8,12 +8,12 @@
   <style>
     /* App-specific overrides */
     body { overflow: hidden; }
-    main { max-width: none; padding: 0; }
+    main { max-width: none; padding: 0; height: 100vh; height: 100dvh; }
     canvas { border: none; width: 100%; height: 100%; display: block; }
     
     /* Overlay UI */
     #ui-overlay {
-      position: fixed;
+      position: fixed;  
       top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
       z-index: 10;
@@ -72,6 +72,10 @@
     /* Model selector */
     #model-select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: white; }
     
+    /* Model upload button */
+    #model-upload-btn { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: white; cursor: pointer; }
+    #model-upload-btn:hover { border-color: var(--accent); background: #eef3fb; }
+
     /* MatCap controls */
     .control-row { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
     .control-row label { display: flex; flex-direction: column; gap: 2px; }
@@ -106,6 +110,7 @@
       font-family: monospace;
     }
     #status-bar.hidden { display: none; }
+    #status-bar.is-error { background: rgba(176,0,32,0.92); }
   </style>
 </head>
 <body>
@@ -137,13 +142,10 @@
         <section class="panel-section">
           <h3>3D Model</h3>
           <select id="model-select">
-            <option value="builtin:sphere">Sphere (built-in)</option>
-            <option value="builtin:torus-knot">Torus Knot (built-in)</option>
-            <option value="builtin:bunny">Bunny (built-in)</option>
-            <option value="builtin:cube">Cube (built-in)</option>
-            <option value="builtin:plane">Plane (built-in)</option>
-            <option value="uploaded">Upload .obj / .glb…</option>
+            <option value="" disabled selected>Loading models...</option>
           </select>
+          <button type="button" id="model-upload-btn">Upload .obj file…</button>
+          <input type="file" id="model-file-input" accept=".obj" style="display: none;">
         </section>
         
         <!-- MatCap options -->
@@ -179,6 +181,9 @@
     </div>
   </main>
   
+  <!-- course helpers: classic scripts (they define globals), they must come before the module -->
+  <script src="./lib/MV.js"></script>
+  <script src="./lib/OBJParser.js"></script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

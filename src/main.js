@@ -1,115 +1,92 @@
-// src/main.js
-// Entry point - WebGPU initialization + triangle test
+import { initWebGPU, resizeCanvasToDisplaySize } from './gpu/device.js';
+import { createRenderer } from './renderer/renderer.js';
+import { createFirstPersonInput } from './input/firstPersonInput.js';
+import { createFlyCamera } from './camera/flyCamera.js';
+import { loadObjFromUrl, loadObjFromFile } from './model/objLoader.js';
+import { createSphereMesh } from './model/primitives.js';
+import { uploadMesh } from './model/gpuMesh.js';
+import { MODELS } from './models.js';
+import { createUi } from './ui/panel.js';
 
-import { initWebGPU, setupCanvas, beginFrame, createPipeline, createVertexBuffer, animate } from './utils/webgpu.js';
-
-// ---------------------------------------------------------------------------
-// Simple triangle shader
-// ---------------------------------------------------------------------------
-
-const TRIANGLE_SHADER = `
-struct VertexOutput {
-  @builtin(position) position: vec4f,
-  @location(0) color: vec4f,
-};
-
-@vertex
-fn main_vs(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
-  let positions = array<vec2f, 3>(
-    vec2f(0.0, 0.5),    // top
-    vec2f(-0.5, -0.5),  // bottom left
-    vec2f(0.5, -0.5)    // bottom right
-  );
-  let colors = array<vec4f, 3>(
-    vec4f(1.0, 0.0, 0.0, 1.0),  // red
-    vec4f(0.0, 1.0, 0.0, 1.0),  // green
-    vec4f(0.0, 0.0, 1.0, 1.0)   // blue
-  );
-  var output: VertexOutput;
-  output.position = vec4f(positions[vertexIndex], 0.0, 1.0);
-  output.color = colors[vertexIndex];
-  return output;
-}
-
-@fragment
-fn main_fs(@location(0) color: vec4f) -> @location(0) vec4f {
-  return color;
-}
-`;
-
-// ---------------------------------------------------------------------------
-// FPS Counter
-// ---------------------------------------------------------------------------
-
-let frameCount = 0;
-let lastFpsTime = performance.now();
-const fpsCounter = document.getElementById('fps-counter');
-
-function updateFps() {
-  frameCount++;
-  const now = performance.now();
-  if (now - lastFpsTime >= 1000) {
-    fpsCounter.textContent = `${frameCount} fps`;
-    frameCount = 0;
-    lastFpsTime = now;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
+const FLY_HINT = 'Click the canvas to fly: mouse to look, W A S D to move, Space / Shift for up / down, Esc to release.';
 
 async function main() {
-  const canvas = document.getElementById('canvas');
-  const statusBar = document.getElementById('status-bar');
-  
-  // Set canvas to full viewport
-  function resizeCanvas() {
-    setupCanvas(canvas, window.innerWidth, window.innerHeight, true);
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-  
-  // Initialize WebGPU
-  let device, context, format;
+  const ui = createUi();
+
+  let gpu;
   try {
-    ({ device, context, format } = await initWebGPU(canvas));
-    statusBar.textContent = `WebGPU ready (${device.adapter?.info?.type || 'unknown'} GPU)`;
-    statusBar.classList.remove('hidden');
-  } catch (err) {
-    statusBar.textContent = `WebGPU init failed: ${err.message}`;
-    statusBar.classList.remove('hidden');
-    console.error(err);
+    gpu = await initWebGPU(ui.canvas);
+  } catch (error) {
+    ui.status.error(error.message);
     return;
   }
-  
-  // Create pipeline
-  const pipeline = createPipeline(device, {
-    shader: TRIANGLE_SHADER,
-    format,
-    topology: 'triangle-list',
+  const { device } = gpu;
+
+  const renderer = createRenderer({ ...gpu, canvas: ui.canvas });
+  const input = createFirstPersonInput(ui.canvas);
+  const camera = createFlyCamera(input);
+
+  // showing a model 
+  let currentModelId = null;
+  let uploaded = null;   // the last uploaded model { name, mesh }, so it can be selected again
+  let latestRequest = 0;
+
+  // Loads a mesh and shows it. Returns the mesh, or null if loading failed or a newer request
+  // replaced this one (the user clicked on another model while this one was still loading).
+  async function showModel(label, loadMesh) {
+    const request = ++latestRequest;
+    ui.status.show(`Loading ${label}…`);
+    try {
+      const mesh = await loadMesh();
+      if (request !== latestRequest) return null;
+      renderer.setMesh(uploadMesh(device, mesh));
+      camera.reset();
+      ui.status.show(`${label}: ${mesh.indices.length / 3} triangles. ${FLY_HINT}`, { hideAfterMs: 8000 });
+      return mesh;
+    } catch (error) {
+      if (request === latestRequest) ui.status.error(`Could not load ${label}: ${error.message}`);
+      return null;
+    }
+  }
+
+  const loadBuiltIn = (model) => model.builtin === 'sphere' ? createSphereMesh() : loadObjFromUrl(model.url);
+
+  async function chooseModel(id) {
+    const model = MODELS.find(m => m.id === id);
+    const loaded = id === ui.UPLOAD_ID
+      ? await showModel(uploaded.name, () => uploaded.mesh)
+      : await showModel(model.name, () => loadBuiltIn(model));
+    if (loaded) currentModelId = id;
+    else ui.selectModel(currentModelId);   // loading failed: the select shows what is on screen
+  }
+
+  ui.setModels(MODELS);
+  ui.onModelChosen(chooseModel);
+  ui.onModelFile(async (file) => {
+    const mesh = await showModel(file.name, () => loadObjFromFile(file));
+    if (!mesh) return;
+    uploaded = { name: file.name, mesh };
+    currentModelId = ui.UPLOAD_ID;
+    ui.setUploadedModel(file.name);
   });
-  
-  // Create vertex buffer (empty - using vertex_index in shader)
-  // We still need a buffer binding, so create a dummy one
-  const vertexBuffer = device.createBuffer({
-    size: 4, // minimal
-    usage: GPUBufferUsage.VERTEX,
-  });
-  
-  // Render loop
-  animate(canvas, (time, dt) => {
-    updateFps();
-    
-    const { pass, submit } = beginFrame(device, context);
-    pass.setPipeline(pipeline);
-    pass.setVertexBuffer(0, vertexBuffer);
-    pass.draw(3); // 3 vertices = 1 triangle
-    submit();
-  });
-  
-  // Hide status after 3 seconds
-  setTimeout(() => statusBar.classList.add('hidden'), 3000);
+
+  ui.selectModel(MODELS[0].id);
+  await chooseModel(MODELS[0].id);
+
+  // frame loop 
+  let last = null;   // the first frame has no previous frame, so its dt is 0
+  function frame(now) {
+    const dt = last === null ? 0 : Math.max(0, (now - last) / 1000);
+    last = now;
+
+    if (resizeCanvasToDisplaySize(ui.canvas)) renderer.resize();
+    camera.update(dt);
+    renderer.render(camera.viewMatrix(), camera.eye);
+    ui.fps.tick(dt);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 main();
